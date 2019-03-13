@@ -1,4 +1,4 @@
-# 🌸 Sakura 🌸(Cherry Blossoms)
+# Sakura (Cherry Blossoms)
 
 The following article: https://technology.inquirer.net/84084/humans-ai-compete-over-cherry-blossom-dates?utm_expid=.XqNwTug2W6nwDVUSgFJXed.1, inspired me to dig into sakura data.
 
