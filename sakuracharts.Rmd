@@ -1,0 +1,88 @@
+---
+title: "sakura_charts.Rmd"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(magrittr)
+library(readr)
+library(mondate)
+library(magrittr)
+
+df <- read_csv('data/flowering.csv')
+
+```
+## Parsing Date Info
+```{r}
+# some prepwork here to parse dates in helpful formats for later visualization
+
+# fix date format so we can parse month as decimal
+df$day_raw <- mapply(FUN = function(x,y) {
+  return(format(paste0('0',x,'2019'),format='%m%d%Y'))
+},df$day,df$year,USE.NAMES = FALSE) 
+
+# create date col
+df$date <- as.Date(df$day_raw,format='%m%d%Y')
+
+# prep step for daymonth variable creation (2019 is default year, this doesn't
+# take leap year into account but should be good enough for the purpose of 
+# this analysis
+df$daymon_raw <- mapply(FUN = function(x,y) {
+  return(format(paste0('0',x,'-2019'),format='%m%d%Y'))
+},df$day,USE.NAMES = FALSE) 
+
+# create daymonth variables
+df$daymonth <- as.Date(df$daymon_raw,format='%m%d-%Y')
+
+# remove intermediate variables
+df <- df %>% select(-c(daymon_raw,day_raw))
+```
+
+```{r}
+
+df %>% group_by(year) %>% 
+  # calculate yearly summary statistics
+  mutate(mean_start = mean(daymonth,na.rm=TRUE),median_start = median(daymonth,na.rm = TRUE)) %>% {
+  # pipe data into plot, reference data using . operator
+  ggplot(.) +
+  # fill in area of bloom behavior yearly
+  geom_ribbon(aes(x=year,ymin = min(daymonth,na.rm=TRUE),ymax = median_start),
+    alpha = .5,fill='#78c679') +
+  # visualizing distribution by location each year
+  geom_point(aes(x=year,y=daymonth,
+               color=l_code)) + 
+  # visualizing change in bloom behavior over years
+  geom_smooth(aes(x=year, y=median_start),fill='#006837',size=.1,alpha=1) +
+      
+  coord_cartesian(xlim=c(1953,2018)) +
+      
+  coord_flip() +
+  # making things prettier, axis and scale transforms, text formatting
+  scale_x_reverse() + 
+      
+  coord_flip() + 
+      
+  scale_color_continuous(high='#e7e1ef',low='#67001f',name='Numeric Location Code') +
+      
+  labs(y="Flowering Date",y="Year",title='Sakura Flowering Dates in Japan: 1953 to 2018',subtitle="Median flowering date for sakura earlier in recent years") +
+
+  # some nice theme suggestions thanks to https://uc-r.github.io/histograms
+  theme(
+        panel.margin.x = unit(3, "lines"),
+        axis.ticks = element_blank(),
+        axis.title.y = element_text(margin = margin(r = 5), color = "grey50"),
+        axis.title.x = element_text(margin = margin(t = 5), color = "darkslategrey"),
+        plot.title = element_text(size = 12, margin = margin(b = 10)),
+        plot.subtitle = element_text(size = 10, color = "darkslategrey", margin = margin(b = 15)),
+        strip.text = element_text(size = 12),
+        text = element_text(family = "Georgia"),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.text = element_text(size = 7),
+        legend.margin = margin(l=1,r=1)
+      )
+}
+```
