@@ -26,7 +26,7 @@ df <- read_csv('data/flowering.csv')
 
 # fix date format so we can parse month as decimal
 df$day_raw <- mapply(FUN = function(x,y) {
-  return(format(paste0('0',x,'2019'),format='%m%d%Y'))
+  return(format(paste0('0',x,y),format='%m%d%Y'))
 },df$day,df$year,USE.NAMES = FALSE) 
 
 # create date col
