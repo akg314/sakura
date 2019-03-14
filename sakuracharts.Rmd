@@ -15,6 +15,7 @@ library(magrittr)
 library(readr)
 library(mondate)
 library(magrittr)
+library(scales)
 
 df <- read_csv('data/flowering.csv')
 
@@ -45,7 +46,7 @@ df$daymonth <- as.Date(df$daymon_raw,format='%m%d-%Y')
 df <- df %>% select(-c(daymon_raw,day_raw))
 ```
 
-```{r echo = FALSE, warning = FALSE}
+```{r 'graphic',echo = FALSE, warning = FALSE}
 df %>% filter(!is.na(date)) %>% group_by(year) %>%
   # calculate yearly summary statistics
   mutate(mean_start = mean(daymonth,na.rm=TRUE),median_start = median(daymonth,na.rm = TRUE)) %>% {
@@ -68,7 +69,7 @@ df %>% filter(!is.na(date)) %>% group_by(year) %>%
       
   coord_flip() + 
       
-  scale_color_continuous(high='#e7e1ef',low='#67001f',name='Numeric Location Code') +
+  scale_color_continuous(high='#e7e1ef',low='#67001f',name='Location Code (range)',labels=function(x){paste0(x,'\'s')}) +
       
   labs(y="Flowering Date",x="Year",title='Sakura Flowering Dates in Japan: 1953 to 2018',subtitle="Median flowering date of Japan's cherry blossoms is earlier in recent years") +
 
@@ -96,6 +97,7 @@ df %>% filter(!is.na(date)) %>% group_by(year) %>%
         legend.title = element_text(size = 9,colour = "grey30"),
         legend.text = element_text(size = 7,colour = "grey30"),
         legend.margin = margin(l=1,r=1)
-      )
+      ) +
+  guides(colour = guide_legend(title.position = "top"))
   }
 ```
