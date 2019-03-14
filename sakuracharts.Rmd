@@ -1,10 +1,10 @@
 ---
-title: "sakura_charts.Rmd"
+title: "Sakura Flowering Trends over Time"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE,message=FALSE,warning=FALSE)
 library(ggplot2)
 library(dplyr)
 library(magrittr)
@@ -15,8 +15,8 @@ library(magrittr)
 df <- read_csv('data/flowering.csv')
 
 ```
-## Parsing Date Info
-```{r}
+
+```{r echo = FALSE}
 # some prepwork here to parse dates in helpful formats for later visualization
 
 # fix date format so we can parse month as decimal
@@ -41,9 +41,8 @@ df$daymonth <- as.Date(df$daymon_raw,format='%m%d-%Y')
 df <- df %>% select(-c(daymon_raw,day_raw))
 ```
 
-```{r}
-
-df %>% group_by(year) %>% 
+```{r echo = FALSE, warning = FALSE}
+df %>% filter(!is.na(date)) %>% group_by(year) %>%
   # calculate yearly summary statistics
   mutate(mean_start = mean(daymonth,na.rm=TRUE),median_start = median(daymonth,na.rm = TRUE)) %>% {
   # pipe data into plot, reference data using . operator
@@ -53,7 +52,7 @@ df %>% group_by(year) %>%
     alpha = .5,fill='#78c679') +
   # visualizing distribution by location each year
   geom_point(aes(x=year,y=daymonth,
-               color=l_code)) + 
+               color=l_code),size=.9) + 
   # visualizing change in bloom behavior over years
   geom_smooth(aes(x=year, y=median_start),fill='#006837',size=.1,alpha=1) +
       
@@ -67,13 +66,22 @@ df %>% group_by(year) %>%
       
   scale_color_continuous(high='#e7e1ef',low='#67001f',name='Numeric Location Code') +
       
-  labs(y="Flowering Date",y="Year",title='Sakura Flowering Dates in Japan: 1953 to 2018',subtitle="Median flowering date for sakura earlier in recent years") +
+  labs(y="Flowering Date",x="Year",title='Sakura Flowering Dates in Japan: 1953 to 2018',subtitle="Median flowering date of Japan's cherry blossoms is earlier in recent years") +
 
   # some nice theme suggestions thanks to https://uc-r.github.io/histograms
   theme(
         panel.margin.x = unit(3, "lines"),
+              # Remove panel border
+        panel.border = element_blank(),  
+        # Remove panel grid lines
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        # Remove panel background
+        panel.background = element_blank(),
+        # Add axis line
+        axis.line = element_line(colour = "grey"),
         axis.ticks = element_blank(),
-        axis.title.y = element_text(margin = margin(r = 5), color = "grey50"),
+        axis.title.y = element_text(margin = margin(r = 5), color = "darkslategrey"),
         axis.title.x = element_text(margin = margin(t = 5), color = "darkslategrey"),
         plot.title = element_text(size = 12, margin = margin(b = 10)),
         plot.subtitle = element_text(size = 10, color = "darkslategrey", margin = margin(b = 15)),
@@ -81,8 +89,9 @@ df %>% group_by(year) %>%
         text = element_text(family = "Georgia"),
         legend.position = "bottom",
         legend.direction = "horizontal",
-        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 9,colour = "grey30"),
+        legend.text = element_text(size = 7,colour = "grey30"),
         legend.margin = margin(l=1,r=1)
       )
-}
+  }
 ```
