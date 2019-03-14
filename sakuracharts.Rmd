@@ -1,6 +1,10 @@
 ---
 title: "Sakura Flowering Trends over Time"
-output: html_document
+output: 
+  md_document:
+    dev: "svg"
+  html_document:
+    dev: "png"
 ---
 
 ```{r setup, include=FALSE}
