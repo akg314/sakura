@@ -1,3 +1,5 @@
 UnusedSakuraCharts.R
 data/raw/**.csv
+*.md
+*.html
 sakura_flowering_model.ipynb
