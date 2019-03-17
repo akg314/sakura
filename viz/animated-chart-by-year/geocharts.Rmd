@@ -1,0 +1,108 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+To do's:
+- recode this location: 高田, incorrectly mapped to China
+
+```{r}
+library(ggmap)
+library(lubridate)
+
+# load in saved data
+# grab flowering and full bloom data
+source('../dfprep.R')
+loc_names <- read_csv('geocoded_locations.csv')
+load('jpmapimage')
+
+# code to initalize some of the objects loaded above 
+# (run only once to avoid making lots of calls to google maps API)
+# get maps and geocode data
+# register_google(key=YOUR_KEY_HERE)
+# jp <- get_map('Japan',5) 
+# loc_names <- unique(df$l_name)
+# japan_locations <- cbind(loc_names,geocode(loc_names))
+# TO DO: need to recode this location: 高田, shows up as China
+# write_csv(japan_locations,'geocoded_locations.csv')
+# save(c(jp),file='jpmapimage')
+```
+
+```{r}
+# filter to one year, remove locations whether either bloom or flowering data
+# is missing
+
+lastyr <- df %>% filter(year == '2018' & !is.na(b_date) & !is.na(f_date)) %>% left_join(.,loc_names, by = c('l_name'='loc_names'))
+
+# to make data frame sorted by date with color value for bloom status
+source('createDaysDF.R') 
+
+```
+
+```{r}
+# set colors for sakura bloom range - we'll add white later to 
+# represent haven't flowered yet; brown is for done blooming
+colors <- c('#fde0dd','#dd3497','#D2B48C')
+
+library(gganimate)
+sakura2018 <- jp %>% ggmap() + 
+  geom_point(data = df_days,
+             aes(x=lon,y=lat,color=color_value,group=l_code),
+             size = 6) + 
+  scale_color_gradientn(name="Blossom Status",colors=colors,na.value='white',labels = c('Not yet','Flowering','In full bloom','Finished')) + theme(
+        panel.spacing = unit(3, "lines"),
+              # Remove panel border
+        panel.border = element_blank(),  
+        # Remove panel grid lines
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        # Remove panel background
+        panel.background = element_blank(),
+        # remove axis elements
+        axis.line = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        
+        # title element styling
+        plot.title = element_text(size = 24, margin = margin(t=4,b = -22),color="#49006a",face='italic'),
+        plot.subtitle = element_text(size = 24, color = "grey10", margin = margin(b = 8),hjust=.985),
+        #strip.text = element_text(size = 12),
+        text = element_text(family = "Georgia"),
+        legend.direction = "vertical",
+        legend.title = element_text(size = 18,colour = "grey30"),
+        legend.text = element_text(size = 18,colour = "grey20"),
+        legend.key.height = unit(2.5,'cm'),
+        #legend.key.size = unit(2,'cm'),
+        legend.position = c(.83,.4),
+        legend.box=margin(rep(100,5)),
+        legend.key = element_rect(fill = NA),
+        legend.background = element_rect(color ='#fff7f3') 
+  ) + 
+  guides(colour = guide_legend(title.position = "top",override.aes= list(size = 10))) + 
+  #animation code and code relying on animation data
+  transition_time(day_counter) + ease_aes("linear") + labs(subtitle = 'Date: {frame_time}',title = 'Cherry Blossoms, 2018') 
+
+animate(sakura2018, height = 800, width =800,nframes=100,fps=7,start_pause=10,end_pause=10)
+anim_save("sakura2018.gif")
+
+# TO DO: 
+# look at different ways to get map from google, e.g. geospatial, 
+
+```
+
+```{r}
+ggplot(lastyr) + geom_point(aes(x=lat,y=lon,color=l_code)) + labs(title="My Title",subtitle = 'My subtitle') + theme(
+        # title element styling
+        plot.title = element_text(size = 20, margin = margin(b = -16)),
+        plot.subtitle = element_text(size = 16, color = "grey30", margin = margin(b = 2),hjust=1),
+        legend.direction = "vertical",
+        legend.title = element_text(size = 18,colour = "grey30"),
+        legend.text = element_text(size = 12,colour = "grey30"),
+        legend.position = c(.8,.2),
+        legend.key.height = unit(1,'cm'),
+        legend.box=margin(rep(100,4)),
+        legend.key = element_rect(fill = NA),
+        legend.background = element_rect(color='pink') 
+  ) + guides(colour = guide_legend(title.position = "top",override.aes = list(size=8)))
+
+```
