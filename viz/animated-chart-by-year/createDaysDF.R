@@ -1,6 +1,10 @@
+library(lubridate)
 lastyr <- lastyr %>% select(-c(b_daymonth,f_daymonth,f_day,b_day))
-
-df_days <- data.frame(day_counter = rep(seq(ymd('2018-01-01'),max(lastyr$b_date) + 30,by='days'),nrow(lastyr)),lastyr)
+max_day <- max(lastyr$b_date,na.rm = TRUE) + 30
+rows <- nrow(lastyr)
+df_days <- data.frame(day_counter = rep(seq(from=as.Date('2018-01-01'),
+                                            to=max_day,by=1),
+                                        rows),lastyr)
 
 # creates a scaled float value that we'll use to mimic bloom pattern
 # over time

@@ -1,44 +1,92 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Creating beautiful map visualizations with gganimate and ggmap"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_depth: 6
 ---
-To do's:
-- recode this location: 高田, incorrectly mapped to China
+```{r include=FALSE}
+knitr::opts_chunk$set(message = FALSE)
+```
+## Introduction
+This is an annotated notebook that walks through the high-level workflow of wrangling data to create time-based gganimate visualizations. It will also offer suggestions for creating aesthetically pleasing ggplot objects.
 
-```{r}
-library(ggmap)
+The final output of this notebook is an animated map visualization of the 2018 sakura (cherry blossom) blooming season in Japan. 
+
+### How to follow along
+Note: if you would like to follow along interactively at home, `git clone` the following repository: https://https:/github.com/akg314/sakura, then `cd` into `viz/animated-chart-by-year` and open up `geocharts.Rmd` in your editor.
+
+## Let's begin! 行きましよう！
+
+### Loading packages and data
+```{r warning=FALSE}
+# load packages
+library(ggmap) 
 library(lubridate)
+```
 
-# load in saved data
-# grab flowering and full bloom data
+Run the script below to preprocess the sakura flower & bloom data and fix date formatting.
+```{r warning=FALSE}
+
+# the script will create a dataframe object named `df` in the global environment
 source('../dfprep.R')
-loc_names <- read_csv('geocoded_locations.csv')
-load('jpmapimage')
 
+# read in geocoded location data
+loc_names <- read_csv('../../data/geocoded_locations.csv')
+
+# load saved map image data
+load('jpmapimage')
+```
+
+Uncomment and run the code below the first time you run this notebook in order to initialize some necessary objects (map data and flower data) that can subsequently be loaded above.
+```{r}
 # code to initalize some of the objects loaded above 
-# (run only once to avoid making lots of calls to google maps API)
+# (run only once to avoid more calls than necessary to the google maps API)
 # get maps and geocode data
 # register_google(key=YOUR_KEY_HERE)
 # jp <- get_map('Japan',5) 
 # loc_names <- unique(df$l_name)
 # japan_locations <- cbind(loc_names,geocode(loc_names))
 # TO DO: need to recode this location: 高田, shows up as China
-# write_csv(japan_locations,'geocoded_locations.csv')
+# write_csv(japan_locations,'../../data/geocoded_locations.csv')
 # save(c(jp),file='jpmapimage')
 ```
 
+Let's take a look at the sakura data.
+```{r}
+head(df)
+```
+### Data cleaning and processing
+Here we'll use some slick dplyr syntax to filter the dataframe to just last year's data for the purpose of making an animated visualization of last year's sakura bloom across Japan.
 ```{r}
 # filter to one year, remove locations whether either bloom or flowering data
 # is missing
+# join with geolocation data
 
 lastyr <- df %>% filter(year == '2018' & !is.na(b_date) & !is.na(f_date)) %>% left_join(.,loc_names, by = c('l_name'='loc_names'))
+```
 
+We need to change the data format in order to create a visualization later on. 
+
+This is done in the sourced script, and the execution is summarized below.
+
+We'll create a new column that tracks the passage of time in the blooming season, named `day_counter`. For each value of `day_counter`, a row corresponding to each location is constructed.
+
+We'll also create a variable that tracks the bloom status for each location at the specified value of `day_counter`. 
+
+We'll name this variable `color_value`, and we'll use its value later to track the bloom status for locations over time in the map visualization by varying the color of the points on the map.
+
+```{r warning=FALSE}
 # to make data frame sorted by date with color value for bloom status
 source('createDaysDF.R') 
 
 ```
 
-```{r}
+### Constructing a visualization
+
+Time to construct the visualization!
+```{r warning=FALSE}
 # set colors for sakura bloom range - we'll add white later to 
 # represent haven't flowered yet; brown is for done blooming
 colors <- c('#fde0dd','#dd3497','#D2B48C')
@@ -83,14 +131,32 @@ sakura2018 <- jp %>% ggmap() +
   transition_time(day_counter) + ease_aes("linear") + labs(subtitle = 'Date: {frame_time}',title = 'Cherry Blossoms, 2018') 
 
 animate(sakura2018, height = 800, width =800,nframes=100,fps=7,start_pause=10,end_pause=10)
-anim_save("sakura2018.gif")
-
-# TO DO: 
-# look at different ways to get map from google, e.g. geospatial, 
+#anim_save("sakura2018.gif")
 
 ```
 
-```{r}
+### Animation notes
+Most of the hard work lies in preprocessing the data and transforming it into a format suitable for feeding it to the gganimate library. Once the setup is complete, using gganimate is quite simple. 
+
+Above we add a transition over time using the `day_counter` and vary the color of each point on the map using the value of `color_value`.
+
+Some helpful tips for working with the `gganimate` package are as follows:
+
+- Reduce the value for `nframes` when working on the visualization to speed up the rendering time. Once you're happy with the appearance, bump this up.
+- Add appropriate values for `start_pause` and `end_pause` to allow the viewers's eyes settle before the animation begins
+- Adjust to an appropriate value of `fps` (frames-per-second) so that the visualization isn't too frantic - this is a visualization of cherry blossoms, after all. It should be somewhat relaxing to watch.
+
+### Aesthetic tips for making visualizations
+
+Some helpful tips for making great-looking visualizations are as follows:
+
+- Don't be afraid to explore `theme()` when creating a plot using ggplot or ggmap, the parameters are straightforward to understand, and the API affords a lot of power to specify the layout and appearance of your plot exactly as you prefer. I like to begin by rendering my graph without specifying any customizations in `theme()`, and then to jot some notes down on the visual aspects of the plot I find unappealing. Next, I make a batch of tweaks to `theme()` to achieve the desired layout.
+
+- If you haven't used `theme()` before, spend a bit of time tweaking parameters one by one to see how each change adjusts the graph's appearance.
+
+- The website http://colorbrewer2.org is a great site for browsing aesthetically pleasing and accessible color palettes.
+
+```{r include=FALSE}
 ggplot(lastyr) + geom_point(aes(x=lat,y=lon,color=l_code)) + labs(title="My Title",subtitle = 'My subtitle') + theme(
         # title element styling
         plot.title = element_text(size = 20, margin = margin(b = -16)),
