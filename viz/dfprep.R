@@ -2,10 +2,11 @@
 library(readr)
 library(lubridate)
 library(tidyverse)
+library(mondate)
 # read in tables, 
 flowering <- read_csv('~/sakura/data/flowering.csv') %>% 
   mutate('f_day'=day,'f_rm'=rm) %>% select(-c(day,rm))
-bloom <- read_csv('sakura/data/bloom.csv') %>% 
+bloom <- read_csv('~/sakura/data/bloom.csv') %>% 
   mutate('b_day'=day,'b_rm'=rm) %>% select(-c(day,rm))
 
 # join data
@@ -36,15 +37,15 @@ df$f_date <- as.Date(df$f_day_raw,format='%m%d%Y')
 # this analysis
 df$b_daymonth_raw <- mapply(FUN = function(x,y) {
   return(format(paste0('0',x,'-2019'),format='%m%d%Y'))
-},df$b_date,USE.NAMES = FALSE)
+},df$b_day,USE.NAMES = FALSE)
 df$f_daymonth_raw <- mapply(FUN = function(x,y) {
   return(format(paste0('0',x,'-2019'),format='%m%d%Y'))
-},df$f_date,USE.NAMES = FALSE) 
+},df$f_day,USE.NAMES = FALSE)
 
 # create daymonth variables
 df$b_daymonth <- as.Date(df$b_daymonth_raw,format='%m%d-%Y')
 df$f_daymonth <- as.Date(df$f_daymonth_raw,format='%m%d-%Y')
 
 df <- df %>% 
-  select(-c(b_daymonth_raw,b_day_raw,f_daymonth_raw,f_day_raw))
+  select(-c(b_day_raw,f_day_raw))
 df <- df %>% select(-ends_with('rm'))
