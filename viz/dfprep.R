@@ -4,9 +4,9 @@ library(lubridate)
 library(tidyverse)
 library(mondate)
 # read in tables, 
-flowering <- read_csv('~/sakura/data/flowering.csv') %>% 
+flowering <- read_csv('~/archive/sakura/data/flowering.csv') %>% 
   mutate('f_day'=day,'f_rm'=rm) %>% select(-c(day,rm))
-bloom <- read_csv('~/sakura/data/bloom.csv') %>% 
+bloom <- read_csv('~/archive/sakura/data/bloom.csv') %>% 
   mutate('b_day'=day,'b_rm'=rm) %>% select(-c(day,rm))
 
 # join data
@@ -49,3 +49,26 @@ df$f_daymonth <- as.Date(df$f_daymonth_raw,format='%m%d-%Y')
 df <- df %>% 
   select(-c(b_day_raw,f_day_raw))
 df <- df %>% select(-ends_with('rm'))
+df <- df %>% select(-ends_with('raw')) %>% select(-ends_with('day')) %>%
+  select(-l_name)
+
+df <- df %>% left_join(df2,by=c('l_code'))
+
+
+jsonlite::toJSON(df) %>% write_lines('~/archive/flowers-japan-web/public/yearlydata.json')
+write.csv(file="~/archive/flowers-japan-web/src/components/public/yearlydata.csv", df,
+          quote=c(1,3,4),row.names = FALSE)
+
+write.csv(file="~/archive/flowers-japan-web/src/components/public/locations.csv", df2,
+          quote=c(1,4,5),row.names = FALSE)
+
+
+df2 <- read_csv('~/archive/sakura/data/geocoded_locations.csv') %>% 
+cbind(.,read_csv('~/archive/sakura/data/location_romaji.csv', col_names = c('_','romaji'),skip=0)) %>%
+  select(-`_`) %>% left_join(.,read_csv('~/archive/sakura/data/flowering.csv') %>%
+                               select(l_code,l_name) %>% distinct(),by=c('loc_names'='l_name'))
+
+jsonlite::toJSON(df2) %>% write_lines('~/archive/flowers-japan-web/public/locations.json')
+
+#%>%
+  write_csv('~/archive/sakura/data/locations.csv')

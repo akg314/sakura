@@ -15,66 +15,17 @@ loc_names <- read_csv('../../data/geocoded_locations.csv')
 load('jpmapimage')
 df <- read_csv('../../data/bloom.csv')
 # df to convert codes to locations
-loc_names %>% left_join(df,c('loc_names'='l_name')) %>% select(loc_names,lon,lat,l_code)
+high_var_rows <- loc_names %>% left_join(df,c('loc_names'='l_name')) %>% select(loc_names,lon,lat,l_code)
+names(high_var_rows)
 ```
 
-```{r}
-# filter to one year, remove locations whether either bloom or flowering data
-# is missing
-
-lastyr <- df %>% filter(year == '2018' & !is.na(b_date) & !is.na(f_date)) %>% left_join(.,loc_names, by = c('l_name'='loc_names'))
-
-# to make data frame sorted by date with color value for bloom status
-source('createDaysDF.R') 
-
-```
 
 ```{r}
-# set colors for sakura bloom range - we'll add white later to 
-# represent haven't flowered yet; brown is for done blooming
-colors <- c('#fde0dd','#dd3497','#D2B48C')
 
-library(gganimate)
-sakura2018 <- jp %>% ggmap() + 
-  geom_point(data = df_days,
-             aes(x=lon,y=lat,color=color_value,group=l_code),
-             size = 6) + 
-  scale_color_gradientn(name="Blossom Status",colors=colors,na.value='white',labels = c('Not yet','Flowering','In full bloom','Finished')) + theme(
-        panel.spacing = unit(3, "lines"),
-              # Remove panel border
-        panel.border = element_blank(),  
-        # Remove panel grid lines
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        # Remove panel background
-        panel.background = element_blank(),
-        # remove axis elements
-        axis.line = element_blank(),
-        axis.ticks = element_blank(),
-        axis.title = element_blank(),
-        axis.text = element_blank(),
-        
-        # title element styling
-        plot.title = element_text(size = 24, margin = margin(t=4,b = -22),color="#49006a",face='italic'),
-        plot.subtitle = element_text(size = 24, color = "grey10", margin = margin(b = 8),hjust=.985),
-        #strip.text = element_text(size = 12),
-        text = element_text(family = "Georgia"),
-        legend.direction = "vertical",
-        legend.title = element_text(size = 18,colour = "grey30"),
-        legend.text = element_text(size = 18,colour = "grey20"),
-        legend.key.height = unit(2.5,'cm'),
-        #legend.key.size = unit(2,'cm'),
-        legend.position = c(.83,.4),
-        legend.box=margin(rep(100,5)),
-        legend.key = element_rect(fill = NA),
-        legend.background = element_rect(color ='#fff7f3') 
-  ) + 
-  guides(colour = guide_legend(title.position = "top",override.aes= list(size = 10))) + 
-  #animation code and code relying on animation data
-  transition_time(day_counter) + ease_aes("linear") + labs(subtitle = 'Date: {frame_time}',title = 'Cherry Blossoms, 2018') 
-
-animate(sakura2018, height = 800, width =800,nframes=100,fps=7,start_pause=10,end_pause=10)
-anim_save("sakura2018.gif")
+jp %>% ggmap() + 
+  geom_point(data = high_var_rows,
+             aes(x=lon,y=lat),
+             size = 1)# + geom_text(data=high_var_rows,aes(x=lon,y=lat,label=loc_names),size=2)
 
 # TO DO: 
 # look at different ways to get map from google, e.g. geospatial, 
